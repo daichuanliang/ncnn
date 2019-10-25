@@ -36,6 +36,7 @@
 #include "layer/eltwise.h"
 #include "layer/elu.h"
 #include "layer/exp.h"
+#include "layer/expanddims.h"
 #include "layer/flatten.h"
 #include "layer/hardsigmoid.h"
 #include "layer/hardswish.h"
@@ -68,6 +69,7 @@
 #include "layer/slice.h"
 #include "layer/shufflechannel.h"
 #include "layer/softmax.h"
+#include "layer/squeeze.h"
 #include "layer/threshold.h"
 #include "layer/unaryop.h"
 #include "layer/yolodetectionoutput.h"
@@ -1904,6 +1906,12 @@ int NetOptimize::save(const char* parampath, const char* binpath)
             fprintf_param_value(" 3=%d", outw)
             fprintf_param_value(" 4=%d", outh)
             fprintf_param_value(" 5=%d", outc)
+            fprintf_param_value(" 6=%d", woffset2)
+            fprintf_param_value(" 7=%d", hoffset2)
+            fprintf_param_value(" 8=%d", coffset2)
+            { if (!op->starts.empty()) fprintf_param_int_array(9, op->starts, pp); }
+            { if (!op->ends.empty()) fprintf_param_int_array(10, op->ends, pp); }
+            { if (!op->axes.empty()) fprintf_param_int_array(11, op->axes, pp); }
         }
         else if (layer->type == "Deconvolution")
         {
@@ -2007,6 +2015,16 @@ int NetOptimize::save(const char* parampath, const char* binpath)
             fprintf_param_value(" 0=%e", base)
             fprintf_param_value(" 1=%e", scale)
             fprintf_param_value(" 2=%e", shift)
+        }
+        else if (layer->type == "ExpandDims")
+        {
+            ncnn::ExpandDims* op = (ncnn::ExpandDims*)layer;
+            ncnn::ExpandDims* op_default = (ncnn::ExpandDims*)layer_default;
+
+            fprintf_param_value(" 0=%d", expand_w)
+            fprintf_param_value(" 1=%d", expand_h)
+            fprintf_param_value(" 2=%d", expand_c)
+            { if (!op->axes.empty()) fprintf_param_int_array(0, op->axes, pp); }
         }
         else if (layer->type == "HardSigmoid")
         {
@@ -2326,6 +2344,16 @@ int NetOptimize::save(const char* parampath, const char* binpath)
                 int fixbug0 = 1;
                 fprintf(pp, " 1=%d", fixbug0);
             }
+        }
+        else if (layer->type == "Squeeze")
+        {
+            ncnn::Squeeze* op = (ncnn::Squeeze*)layer;
+            ncnn::Squeeze* op_default = (ncnn::Squeeze*)layer_default;
+
+            fprintf_param_value(" 0=%d", squeeze_w)
+            fprintf_param_value(" 1=%d", squeeze_h)
+            fprintf_param_value(" 2=%d", squeeze_c)
+            { if (!op->axes.empty()) fprintf_param_int_array(0, op->axes, pp); }
         }
         else if (layer->type == "Threshold")
         {
